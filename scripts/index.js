@@ -15,11 +15,7 @@ function getCard(item, deleteCard) {
   return cardElement;
 }
 
-function createCard(name, link) {
-  item = {
-    name,
-    link
-  }
+function createCard(item) {
   cardList.append(getCard(item, deleteCard));
 }
 
@@ -27,4 +23,4 @@ function deleteCard(item) {
   item.remove();
 }
 
-initialCards.forEach(elem => createCard(elem.name, elem.link));
+initialCards.forEach(createCard);
