@@ -1,7 +1,7 @@
 import '../pages/index.css';
 import { initialCards } from './components/cards.js';
-import { cardList, getCard, getLike, deleteCard, fullImage, fullImageCaption } from './components/card.js';
-import { openModal, closeModal, modalNewCard, modalProfileEdit, getClickOverlay, modalViewImage } from './components/modal.js';
+import { getCard, handleCardLikeButton, deleteCard } from './components/card.js';
+import { openModal, closeModal, getClickOverlay } from './components/modal.js';
 
 const profile = document.querySelector('.profile__info');
 const profileEditButton = profile.querySelector('.profile__edit-button');
@@ -14,7 +14,13 @@ const newCardButton = document.querySelector('.profile__add-button');
 const formNewCard = document.forms['new-place'];
 const newCardName = formNewCard.elements['place-name'];
 const newCardSrc = formNewCard.elements['link'];
+const cardList = document.querySelector('.places__list');
+const fullImage = document.querySelector('.popup__image');
+const fullImageCaption = document.querySelector('.popup__caption');
 const modals = document.querySelectorAll('.popup');
+const modalProfileEdit = document.querySelector('.popup_type_edit');
+const modalNewCard = document.querySelector('.popup_type_new-card');
+const modalViewImage = document.querySelector('.popup_type_image');
 const buttonsCloseModal = document.querySelectorAll('.popup__close');
 
 function getProfileEdit(name, job) {
@@ -39,11 +45,11 @@ function getNewCard(name, src) {
 }
 
 function createCard(item) {
-  cardList.append(getCard(item, deleteCard, getLike, handleClickCardImage));
+  cardList.append(getCard(item, deleteCard, handleCardLikeButton, handleClickCardImage));
 }
 
 function createNewCard(item) {
-  cardList.prepend(getCard(item, deleteCard, getLike, handleClickCardImage));
+  cardList.prepend(getCard(item, deleteCard, handleCardLikeButton, handleClickCardImage));
 }
 
 function handleClickCardImage(evt) {

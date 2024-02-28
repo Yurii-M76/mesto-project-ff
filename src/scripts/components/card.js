@@ -1,9 +1,6 @@
-export const cardList = document.querySelector('.places__list');
 const card = document.querySelector('#card-template').content;
-export const fullImage = document.querySelector('.popup__image');
-export const fullImageCaption = document.querySelector('.popup__caption');
 
-export function getCard(item, deleteCard, getLike, handleClickCardImage) {
+export function getCard(item, deleteCard, handleCardLikeButton, handleClickCardImage) {
   const cardElement = card.querySelector('.card').cloneNode(true);
   const cardImage = cardElement.querySelector('.card__image');
   const cardName = cardElement.querySelector('.card__title');
@@ -23,7 +20,7 @@ export function getCard(item, deleteCard, getLike, handleClickCardImage) {
   return cardElement;
 }
 
-function handleCardLikeButton(evt) {
+export function handleCardLikeButton(evt) {
   if(Array.from(evt.target.classList).includes('card__like-button')) {
     getLike(evt.target);
   }
