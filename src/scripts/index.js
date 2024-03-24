@@ -1,12 +1,14 @@
 import '../pages/index.css';
-import { initialCards } from './components/cards.js';
 import { getCard, handleCardLikeButton, deleteCard } from './components/card.js';
 import { openModal, closeModal, getClickOverlay } from './components/modal.js';
+import { enableValidation, clearValidation } from './components/validation.js';
+import { getUserData, sendUserData, initialCards, addNewCard } from './components/api.js';
 
 const profile = document.querySelector('.profile__info');
 const profileEditButton = profile.querySelector('.profile__edit-button');
 const profileName = profile.querySelector('.profile__title');
 const profileDescription = profile.querySelector('.profile__description');
+const profileImage = document.querySelector('.profile__image');
 const formEditProfile = document.forms['edit-profile'];
 const nameProfile = formEditProfile.elements['name'];
 const jobProfile = formEditProfile.elements['description'];
@@ -31,6 +33,7 @@ function getProfileEdit(name, job) {
 function handleFormSubmitProfile(evt) {
   evt.preventDefault();
   getProfileEdit(nameProfile, jobProfile);
+  sendUserData({name: nameProfile, job: jobProfile});
   closeModal(modalProfileEdit);
 }
 
@@ -42,6 +45,7 @@ function handleFormSubmitNewCard(evt) {
 
 function getNewCard(name, src) {
   createNewCard({name: name.value, link: src.value});
+  addNewCard({name: newCardName, link: newCardSrc});
 }
 
 function createCard(item) {
@@ -65,11 +69,13 @@ profileEditButton.addEventListener('click', () => {
   openModal(modalProfileEdit);
   nameProfile.value = profileName.textContent;
   jobProfile.value = profileDescription.textContent;
+  clearValidation(formEditProfile);
 });
 
 newCardButton.addEventListener('click', () => {
   openModal(modalNewCard);
   formNewCard.reset();
+  clearValidation(formNewCard);
 });
 
 buttonsCloseModal.forEach(elem => {
@@ -85,4 +91,15 @@ modals.forEach(elem => {
 
 formEditProfile.addEventListener('submit', handleFormSubmitProfile);
 formNewCard.addEventListener('submit', handleFormSubmitNewCard);
-initialCards.forEach(createCard);
+
+getUserData({name: profileName, job: profileDescription, image: profileImage});
+initialCards(createCard);
+
+enableValidation({
+  formSelector: '.popup__form',
+  inputSelector: '.popup__input',
+  submitButtonSelector: '.popup__button',
+  inactiveButtonClass: 'popup__button_disabled',
+  inputErrorClass: 'popup__input_type_error',
+  errorClass: 'popup__error_visible'
+});
