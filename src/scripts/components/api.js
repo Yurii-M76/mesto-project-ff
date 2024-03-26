@@ -6,56 +6,6 @@ export const config = {
   }
 }
 
-export const getUserData = (data) => {
-  request('/users/me', { headers: config.headers })
-    .then(checkResponse)
-    .then((user) => {
-      data.name.textContent = user.name;
-      data.job.textContent = user.about;
-      data.image.style = `background-image: url(${user.avatar});`;
-    })
-    .catch(requestError);
-}
-
-export const sendUserData = (data) => {
-  request('/users/me', {
-    method: 'PATCH',
-    body: JSON.stringify({
-      name: data.name.value,
-      about: data.job.value
-    }),
-    headers: config.headers
-  })
-  .then(checkResponse)
-  .then((user) => {
-    data.name.textContent = user.name;
-    data.name.textContent = user.about;
-  })
-  .catch(requestError);
-}
-
-export const initialCards = (funcCreateCard) => {
-  request('/cards', { headers: config.headers })
-    .then(checkResponse)
-    .then((data) => {
-      data.forEach(funcCreateCard);
-    })
-    .catch(requestError);
-}
-
-export const addNewCard = (data) => {
-  request('/cards', {
-    method: 'POST',
-    body: JSON.stringify({
-      name: data.name.value,
-      link: data.link.value
-    }),
-    headers: config.headers
-  })
-  .then(checkResponse)
-  .catch(requestError);
-}
-
 export const request = (url, options) => {
   return fetch(`${config.baseUrl}${url}`, options);
 }
@@ -71,3 +21,17 @@ export const checkResponse = (res) => {
 export const requestError = (err) => {
   console.log(err);
 }
+
+export const userData = new Promise((resolve) => {
+  return request('/users/me', { headers: config.headers })
+  .then(checkResponse)
+  .then(resolve)
+  .catch(requestError)
+});
+
+export const cardsData = new Promise((resolve) => {
+  return request('/cards', { headers: config.headers })
+  .then(checkResponse)
+  .then(resolve)
+  .catch(requestError);
+});

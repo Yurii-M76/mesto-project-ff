@@ -1,14 +1,16 @@
 import '../pages/index.css';
-import { getCard, handleCardLikeButton, deleteCard } from './components/card.js';
+import { config, request, checkResponse, requestError, userData, cardsData } from './components/api.js';
+import { getCard, handleCardLikeButton, removeElement } from './components/card.js';
 import { openModal, closeModal, getClickOverlay } from './components/modal.js';
 import { enableValidation, clearValidation } from './components/validation.js';
-import { getUserData, sendUserData, initialCards, addNewCard } from './components/api.js';
 
 const profile = document.querySelector('.profile__info');
 const profileEditButton = profile.querySelector('.profile__edit-button');
 const profileName = profile.querySelector('.profile__title');
 const profileDescription = profile.querySelector('.profile__description');
 const profileImage = document.querySelector('.profile__image');
+const formUpdateUserAvatar = document.forms['edit-avatar'];
+const newUserAvatar = formUpdateUserAvatar.elements['avatar-link-input'];
 const formEditProfile = document.forms['edit-profile'];
 const nameProfile = formEditProfile.elements['name'];
 const jobProfile = formEditProfile.elements['description'];
@@ -20,40 +22,74 @@ const cardList = document.querySelector('.places__list');
 const fullImage = document.querySelector('.popup__image');
 const fullImageCaption = document.querySelector('.popup__caption');
 const modals = document.querySelectorAll('.popup');
+const modalUpdateUserAvatar = document.querySelector('.popup_type_avatar');
 const modalProfileEdit = document.querySelector('.popup_type_edit');
 const modalNewCard = document.querySelector('.popup_type_new-card');
 const modalViewImage = document.querySelector('.popup_type_image');
 const buttonsCloseModal = document.querySelectorAll('.popup__close');
 
-function getProfileEdit(name, job) {
-  profileName.textContent = name.value;
-  profileDescription.textContent = job.value;
+function getUserProfile(name, about) {
+  request('/users/me', {
+    method: 'PATCH',
+    body: JSON.stringify({
+      name: name.value,
+      about: about.value
+    }),
+    headers: config.headers
+  })
+  .then(checkResponse)
+  .then((user) => {
+    getUserProfileToDom(user.name, user.about);
+  })
+  .catch(requestError);
+}
+
+function createNewCard(name, src) {
+  request('/cards', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: name.value,
+      link: src.value
+    }),
+    headers: config.headers
+  })
+  .then(checkResponse)
+  .then((card) => {
+    cardList.prepend(getCard(card, removeElement, handleCardLikeButton, handleClickCardImage));
+  })
+  .catch(requestError);
+}
+
+function updateUserAvatar(src) {
+  request(`/users/me/avatar`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      avatar: src
+    }),
+    headers: config.headers
+  })
+  .then(checkResponse)
+  .then(() => {
+    profileImage.style = `background-image: url(${src})`;
+  })
+  .catch(requestError);
+}
+
+function getUserProfileToDom(name, about) {
+  profileName.textContent = name;
+  profileDescription.textContent = about;
 }
 
 function handleFormSubmitProfile(evt) {
   evt.preventDefault();
-  getProfileEdit(nameProfile, jobProfile);
-  sendUserData({name: nameProfile, job: jobProfile});
+  getUserProfile(nameProfile, jobProfile);
   closeModal(modalProfileEdit);
 }
 
 function handleFormSubmitNewCard(evt) {
   evt.preventDefault();
-  getNewCard(newCardName, newCardSrc);
+  createNewCard(newCardName, newCardSrc);
   closeModal(modalNewCard);
-}
-
-function getNewCard(name, src) {
-  createNewCard({name: name.value, link: src.value});
-  addNewCard({name: newCardName, link: newCardSrc});
-}
-
-function createCard(item) {
-  cardList.append(getCard(item, deleteCard, handleCardLikeButton, handleClickCardImage));
-}
-
-function createNewCard(item) {
-  cardList.prepend(getCard(item, deleteCard, handleCardLikeButton, handleClickCardImage));
 }
 
 function handleClickCardImage(evt) {
@@ -64,6 +100,18 @@ function handleClickCardImage(evt) {
     openModal(modalViewImage);
   }
 }
+
+function handleFormSubmitNewAvatar(evt) {
+  evt.preventDefault();
+  updateUserAvatar(newUserAvatar.value);
+  closeModal(modalUpdateUserAvatar);
+}
+
+profileImage.addEventListener('click', () => {
+  openModal(modalUpdateUserAvatar);
+  formUpdateUserAvatar.reset();
+  clearValidation(formUpdateUserAvatar);
+});
 
 profileEditButton.addEventListener('click', () => {
   openModal(modalProfileEdit);
@@ -89,11 +137,9 @@ modals.forEach(elem => {
   getClickOverlay(elem);
 });
 
+formUpdateUserAvatar.addEventListener('submit', handleFormSubmitNewAvatar);
 formEditProfile.addEventListener('submit', handleFormSubmitProfile);
 formNewCard.addEventListener('submit', handleFormSubmitNewCard);
-
-getUserData({name: profileName, job: profileDescription, image: profileImage});
-initialCards(createCard);
 
 enableValidation({
   formSelector: '.popup__form',
@@ -103,3 +149,15 @@ enableValidation({
   inputErrorClass: 'popup__input_type_error',
   errorClass: 'popup__error_visible'
 });
+
+Promise.all([userData, cardsData])
+  .then(([user, cards]) => {
+    profileName.textContent = user.name;
+    profileDescription.textContent = user.about;
+    profileImage.style = `background-image: url(${user.avatar});`;
+   
+    cards.forEach(card => {
+      cardList.append(getCard(card, removeElement, handleCardLikeButton, handleClickCardImage, user['_id'], card.likes.length));
+    })
+  })
+  .ful
