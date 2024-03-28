@@ -1,6 +1,6 @@
-import { config, request, checkResponse, requestError} from '../components/api.js';
+import { deleteCard, requestError } from '../components/api.js';
 
-export function getCard(item, removeElement, handleCardLikeButton, handleClickCardImage, userId, countLikes = 0) {
+export function getCard(set) {
   const card = document.querySelector(`#${cardElements.cardTemplae}`).content;
   const cardElement = card.querySelector(`.${cardElements.cardElement}`).cloneNode(true);
   const cardImage = cardElement.querySelector(`.${cardElements.cardImage}`);
@@ -8,74 +8,39 @@ export function getCard(item, removeElement, handleCardLikeButton, handleClickCa
   const cardDeleteButton = cardElement.querySelector(`.${cardElements.cardDeleteButton}`);
   const cardLikeButton = cardElement.querySelector(`.${cardElements.cardLikeButton}`);
   const cardLikeCount = cardElement.querySelector(`.${cardElements.cardLikeCount}`);
-  cardName.textContent = item.name;
-  cardImage.src = item.link;
-  cardImage.alt = item.name;
-  cardLikeCount.textContent = countLikes;
+  cardName.textContent = set.item.name;
+  cardImage.src = set.item.link;
+  cardImage.alt = set.item.name;
+  cardLikeCount.textContent = set.countLikes;
+  
+  set.deleteButtonStatus ? cardDeleteButton.remove() : false;
 
-  if(item.owner['_id'] !== userId) {
-    removeElement(cardDeleteButton);
-  }
-
-  item.likes.forEach(element => {
-    if(element['_id'] === userId) {
-      cardLikeButton.classList.toggle(cardElements.cardLikeButtonIsActive);
+  set.item.likes.forEach(element => {
+    if(element['_id'] === set.user) {
+      cardLikeButton.classList.add(cardElements.cardLikeButtonIsActive);
     }
   });
 
   cardLikeButton.addEventListener('click', () => {
-    handleCardLikeButton(item, cardLikeButton, cardLikeCount);
+    set.handleLike(set.item['_id'], cardLikeButton, cardElements.cardLikeButtonIsActive)
+    .then((card) => {
+      cardLikeButton.classList.toggle(cardElements.cardLikeButtonIsActive);
+      cardLikeCount.textContent = card.likes.length;
+    })
+    .catch(requestError);
   });
 
-  cardElement.addEventListener('click', handleClickCardImage);
+  cardElement.addEventListener('click', set.handleClick);
   
   cardDeleteButton.addEventListener('click', () => {
-    deleteCard(item, cardElement);
+    deleteCard(set.item['_id'])
+    .then(() => {
+      cardElement.remove();
+    })
+    .catch(requestError);
   });
 
   return cardElement;
-}
-
-export function handleCardLikeButton(item, button, cardLikeCount) {
-  if(!button.classList.contains(cardElements.cardLikeButtonIsActive)) {
-    request(`/cards/likes/${item['_id']}`, {
-      method: 'PUT',
-      headers: config.headers
-    })
-      .then(checkResponse)
-      .then(() => {
-        button.classList.toggle(cardElements.cardLikeButtonIsActive);
-        cardLikeCount.textContent++;
-      })
-      .catch(requestError);
-  } else {
-    request(`/cards/likes/${item['_id']}`, {
-      method: 'DELETE',
-      headers: config.headers
-    })
-      .then(checkResponse)
-      .then(() => {
-        button.classList.toggle(cardElements.cardLikeButtonIsActive);
-        cardLikeCount.textContent--;
-      })
-      .catch(requestError);
-  }
-}
-
-export function removeElement(item) {
-  item.remove();
-}
-
-function deleteCard(item, card) {
-  request(`/cards/${item['_id']}`, {
-    method: 'DELETE',
-    headers: config.headers
-  })
-    .then(checkResponse)
-    .then(() => {
-      removeElement(card);
-    })
-    .catch(requestError);
 }
 
 export const cardElements = {

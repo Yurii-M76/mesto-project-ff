@@ -1,34 +1,36 @@
-export const enableValidation = (set) => {
-  const formList = Array.from(document.querySelectorAll(set.formSelector));
+export const enableValidation = (validationConfig) => {
+  const formList = Array.from(document.querySelectorAll(validationConfig.formSelector));
   formList.forEach((formElement) => {
-    setEventListeners(set, formElement);
+    setEventListeners(formElement, validationConfig);
   });
 };
 
-const setEventListeners = (set, formElement) => {
-  const inputList = Array.from(formElement.querySelectorAll(set.inputSelector));
-  const buttonElement = formElement.querySelector(set.submitButtonSelector);
+const setEventListeners = (formElement, validationConfig) => {
+  const inputList = Array.from(formElement.querySelectorAll(validationConfig.inputSelector));
+  const buttonElement = formElement.querySelector(validationConfig.submitButtonSelector);
+  toggleButtonState(inputList, buttonElement, validationConfig);
   inputList.forEach((inputElement) => {
     inputElement.addEventListener('input', () => {
-      isValid(formElement, inputElement);
-      toggleButtonState(inputList, buttonElement);
+      isValid(formElement, inputElement, validationConfig);
+      toggleButtonState(inputList, buttonElement, validationConfig);
     });
   });
 };
 
-const isValid = (formElement, inputElement) => {
+const isValid = (formElement, inputElement, validationConfig) => {
   const formErrorMessage = formElement.querySelector(`.${inputElement.id}-error`);
   const regex = /^[a-zA-Zа-яА-ЯёЁ\s-]*$/;
-  if(!regex.test(inputElement.value) &&
-    (inputElement.name === 'name' || inputElement.name === 'place-name')) {
+
+  if(!regex.test(inputElement.value) && inputElement.dataset.errorMesage) {
     inputElement.setCustomValidity(inputElement.dataset.errorMesage);
   } else {
     inputElement.setCustomValidity('');
   }
+
   if(!inputElement.validity.valid) {
-    showInputError(inputElement, formErrorMessage);
+    showInputError(inputElement, formErrorMessage, validationConfig);
   } else {
-    hideInputError(inputElement, formErrorMessage);
+    hideInputError(inputElement, formErrorMessage, validationConfig);
   }
 };
 
@@ -38,30 +40,30 @@ const hasInvalidInput = (inputList) => {
   })
 };
 
-const toggleButtonState = (inputList, buttonElement) => {
+const toggleButtonState = (inputList, buttonElement, validationConfig) => {
   if (hasInvalidInput(inputList)) {
     buttonElement.disabled = true;
-    buttonElement.classList.add('popup__button_disabled');
+    buttonElement.classList.add(validationConfig.inactiveButtonClass);
   } else {
     buttonElement.disabled = false;
-    buttonElement.classList.remove('popup__button_disabled');
+    buttonElement.classList.remove(validationConfig.inactiveButtonClass);
   }
 };
 
-const showInputError = (element, formErrorMessage) => {
-  element.classList.add('popup__input_type_error');
+const showInputError = (element, formErrorMessage, validationConfig) => {
+  element.classList.add(validationConfig.inputErrorClass);
   formErrorMessage.textContent = element.validationMessage;
 };
 
-const hideInputError = (element, formErrorMessage) => {
-  element.classList.remove('popup__input_type_error');
+const hideInputError = (element, formErrorMessage, validationConfig) => {
+  element.classList.remove(validationConfig.inputErrorClass);
   formErrorMessage.textContent = '';
 };
 
-export const clearValidation = (formElement) => {
-  const inputList = Array.from(formElement.querySelectorAll('.popup__input'));
-  const errorList = Array.from(formElement.querySelectorAll('.form__input-error'));
-  inputList.forEach(element => element.classList.remove('popup__input_type_error'));
+export const clearValidation = (formElement, validationConfig) => {
+  const inputList = Array.from(formElement.querySelectorAll(validationConfig.inputSelector));
+  inputList.forEach(element => element.classList.remove(validationConfig.inputErrorClass));
+  const errorList = Array.from(formElement.querySelectorAll(validationConfig.inputErrorSelector));
   errorList.forEach(element => element.textContent = '');
-  toggleButtonState(inputList, formElement.querySelector('button'));
+  toggleButtonState(inputList, formElement.querySelector(validationConfig.submitButtonSelector), validationConfig);
 };
